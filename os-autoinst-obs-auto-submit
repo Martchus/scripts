@@ -101,9 +101,17 @@ osc="${osc:-"$prefix osc"}"
 TMPDIR=${TMPDIR:-$(mktemp -d)}
 trap 'rm -rf "$TMPDIR"' EXIT
 
+failed_packages=
 (cd "$TMPDIR"
 for package in os-autoinst openQA os-autoinst-distri-opensuse-deps; do
+    echo "Considering package $package"
     $osc service wait "$src_project"/$package
+    failed_results=$($osc results --repo openSUSE_Factory --failed "$src_project" "$package")
+    if ! [[ $failed_results =~ $\s*^ ]]; then
+        failed_packages+=" $package"
+        echo -e "Skipping submission of $package due to build failures:\n$failed_results"
+        continue
+    fi
     $osc co -S "$src_project"/$package
     if test "$package" == "os-autoinst-distri-opensuse-deps"; then
         $osc cat openSUSE:Factory $package $package.spec > $package-factory.spec
@@ -130,4 +138,8 @@ for package in os-autoinst openQA os-autoinst-distri-opensuse-deps; do
         update_package $package
     )
 done
+if [[ $failed_packages ]]; then
+    echo "failed packages:$failed_packages"
+    false
+fi
 )
