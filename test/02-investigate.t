@@ -121,6 +121,19 @@ done
 rc=0
 out=$(force=true finalize_investigation_comment 31 30 1234 '' 2>&1) || rc=$?
 is "$rc" 0 'success if no investigation jobs needed to be created after all'
+#set +e
+#set -euo pipefail
+some-function() {
+    return 255
+}
+another-function() {
+    foo=$(some-function ); rc=$?
+    [[ $rc != 255 ]] && return $rc
+    echo "another function executed until the end"
+    return 0
+}
+another-function
+#[[ ! -f comment_1234_deleted ]]; comment_1234_deleted=$?
 [[ -f comment_1234_deleted ]] && comment_1234_deleted=1 || comment_1234_deleted=0
 [[ -f comment_for_job_31_created ]] && comment_for_job_31_created=1 || comment_for_job_31_created=0
 is "$comment_1234_deleted" 1 'comment on job 30 deleted'
