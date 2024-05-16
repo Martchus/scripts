@@ -7,8 +7,9 @@ runs:
   steps:
     - uses: actions/checkout@v4
       with:
-        repository: os-autoinst/scripts
+        repository: Martchus/scripts
         path: scripts
+        ref: clone-on-comment
     - name: Clone and monitor job mentioned in PR description
       run: scripts/openqa-clone-and-monitor-job-from-pr
       shell: bash
