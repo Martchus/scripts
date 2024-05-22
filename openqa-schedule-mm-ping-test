@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eux -o pipefail
+set -eux
 
 openqa_url=${openqa_url:-https://openqa.opensuse.org}
 distri=${distri:-opensuse}
@@ -50,7 +50,11 @@ job_templates:
       PARALLEL_WITH: ping_server
 EOF
 
-hdd=$(openqa-cli api --host "$openqa_url" jobs version="$version" scope=relevant arch="$arch" flavor="$flavor" test="$test_name" latest=1 | jq -r '.jobs | map(select(.result == "passed")) | max_by(.settings.BUILD) .settings.HDD_1')
+echo "before json"
+json=$(openqa-cli api --host "$openqa_url" jobs version="$version" scope=relevant arch="$arch" flavor="$flavor" test="$test_name" latest=1) || ret=$?
+echo "after json: $ret"
+hdd=$(echo "$json" | jq -r '.jobs | map(select(.result == "passed")) | max_by(.settings.BUILD) .settings.HDD_1') || ret=$?
+echo "after hdd: $ret"
 time openqa-cli schedule \
     --monitor \
     --host "$openqa_url" \
